@@ -44,3 +44,8 @@ else
   MYVAR="$(./get_tpm_pubhash)"; touch "hashes/${MYVAR}"
   echo "Building spire tpm plugin ..[ok]"
 fi
+echo "Starting containers ......"
+cd spire
+docker compose up -d
+cd ..
+echo "Starting containers ..[ok]"
