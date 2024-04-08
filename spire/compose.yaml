@@ -1,0 +1,31 @@
+version: '3'
+services:
+  prometheus:
+    image: "prom/prometheus:v2.20.1"
+    container_name: "prometheus"
+    hostname: "prometheus"
+    restart: "unless-stopped"
+    volumes:
+      - "./prometheus:/etc/prometheus"
+    ports:
+      - "9090:9090"
+  spire-server:
+    image: "spire-tpm-plugin"
+    container_name: "server-spire"
+    hostname: "spire-server"
+    volumes:
+        - "./server:/opt/spire/conf/server"
+        - "../hashes:/opt/spire/data/hashes"
+    command: ["/usr/bin/spire-server", "run", "-config", "/opt/spire/conf/server/server.conf"]
+  spire-agent:
+    privileged: true
+    user: "root"
+    image: "spire-tpm-plugin"
+    container_name: "agent-spire"
+    depends_on: ["spire-server"]
+    hostname: "spire-agent"
+    volumes:
+        - "./agent:/opt/spire/conf/agent"
+        - "/var/run/:/var/run/"
+        - "/dev:/dev"
+    command: ["/usr/bin/spire-agent", "run", "-config", "/opt/spire/conf/agent/agent.conf"]

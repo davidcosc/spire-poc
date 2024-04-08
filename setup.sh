@@ -1,9 +1,4 @@
 #!/bin/bash
-#$(return 0 2>/dev/null)
-#if test "${?}" -ne "0"; then
-#  echo "Script should be sourced, but source check returned non zero."
-#  exit 1
-#fi
 set -e
 echo "Update and upgrade ......"
 apt update && apt upgrade -y
@@ -14,48 +9,38 @@ echo "Installing docker ..[ok]"
 echo "Installing docker-compose ......"
 apt install docker-compose-v2 -y
 echo "Installing docker-compose ..[ok]"
-echo "Installing git ......"
-apt install git -y
-echo "Installing git ..[ok]"
-echo "Installing swtpm ......"
-apt install swtpm swtpm-tools tpm2-tools tss2 -y
-echo "Installing swtpm ..[ok]"
-FILE="/tmp/mytpm2"
-echo "Configuring swtpm ......"
-if test -d "${FILE}"; then
-  echo "Swtpm already configured."
-  echo "Configuring swtpm ..[ok]"
+echo "Installing tpm2 tools ......"
+apt install tpm2-tools tss2 -y
+echo "Installing tpm2 tools ..[ok]"
+FILE="./get_tpm_pubhash"
+echo "Building spire with tpm plugin ......"
+if test -f "${FILE}"; then
+  echo "Spire tpm plugin already exists."
+  echo "Building spire with tpm plugin ..[ok]"
 else
-  mkdir -p "${FILE}"
-  chown tss:root "${FILE}"
-  swtpm_setup --tpmstate "${FILE}" --create-ek-cert --create-platform-cert --tpm2
-  swtpm socket --tpmstate dir="${FILE}" --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init --daemon
-  export TPM_COMMAND_PORT=2321 TPM_PLATFORM_PORT=2322 TPM_SERVER_NAME=localhost TPM_INTERFACE_TYPE=socsim TPM_SERVER_TYPE=raw
-  tssstartup
-  tssgetcapability -cap 1 -pr 0x01c00000
-  echo "Configuring swtpm ..[ok]"
+  echo "Building spire image."
+  cd spire
+  docker build -t spire-tpm-plugin .
+  docker run -dit --name spire-tpm-plugin spire-tpm-plugin "/usr/bin/spire-server" "run"
+  sleep 3
+  cd ..
+  echo "Copying binaries from container."
+  docker cp "spire-tpm-plugin:/go/spire-tpm-plugin/build/linux/amd64/get_tpm_pubhash" .
+  docker cp "spire-tpm-plugin:/go/spire-tpm-plugin/build/linux/amd64/tpm_attestor_server" .
+  docker cp "spire-tpm-plugin:/go/spire-tpm-plugin/build/linux/amd64/tpm_attestor_agent" .
+  echo "Cleaning up build container."
+  docker stop spire-tpm-plugin
+  docker container prune -f
+  echo "Generating binary checksums."
+  sha256sum ./tpm_attestor_agent > tpm_attestor_agent_hash
+  sha256sum ./tpm_attestor_server > tpm_attestor_server_hash
+  sed -i "s/  .\/tpm.*//g" tpm_attestor_agent_hash
+  sed -i "s/  .\/tpm.*//g" tpm_attestor_server_hash
+  echo "Writing checksums to spire agent and server configs."
+  MYVAR="$(cat tpm_attestor_agent_hash)"; sed -i "s/plugin_checksum = \".*\"/plugin_checksum = \"$MYVAR\"/" spire/agent/agent.conf
+  MYVAR="$(cat tpm_attestor_server_hash)"; sed -i "s/plugin_checksum = \".*\"/plugin_checksum = \"$MYVAR\"/" spire/server/server.conf
+  echo "Creating tpm ek fingerprint dir for server."
+  mkdir -p hashes
+  MYVAR="$(./get_tpm_pubhash)"; touch "hashes/${MYVAR}"
+  echo "Building spire tpm plugin ..[ok]"
 fi
-FILE="./spire-tutorials"
-echo "Cloning spire tutorials ......"
-if test -d "${FILE}"; then
-  echo "Spire tutorials already cloned."
-  echo "Cloning spire tutorials ..[ok]"
-else
-  git clone https://github.com/spiffe/spire-tutorials.git
-  echo "Cloning spire tutorials ..[ok]"
-fi
-echo "Replace old docker-compose cmd with docker compose cmd ......"
-echo "Sed ./spire-tutorials/docker-compose/metrics/test.sh"
-sed -i 's/docker-compose /docker compose /' ./spire-tutorials/docker-compose/metrics/test.sh
-echo "Sed ./spire-tutorials/docker-compose/metrics/scripts/clean-env.sh"
-sed -i 's/docker-compose /docker compose /' ./spire-tutorials/docker-compose/metrics/scripts/clean-env.sh
-echo "Sed ./spire-tutorials/docker-compose/metrics/scripts/create-workload-registration-entry.sh"
-sed -i 's/docker-compose /docker compose /' ./spire-tutorials/docker-compose/metrics/scripts/create-workload-registration-entry.sh
-echo "Sed ./spire-tutorials/docker-compose/metrics/scripts/fetch_svid.sh"
-sed -i 's/docker-compose /docker compose /' ./spire-tutorials/docker-compose/metrics/scripts/fetch_svid.sh
-echo "Sed ./spire-tutorials/docker-compose/metrics/scripts/set-env.sh"
-sed -i 's/docker-compose /docker compose /' ./spire-tutorials/docker-compose/metrics/scripts/set-env.sh
-echo "Replace old docker-compose cmd with docker compose cmd ..[ok]"
-echo "Testing setup ......"
-./spire-tutorials/docker-compose/metrics/test.sh
-echo "Testing setup ..[ok]"
