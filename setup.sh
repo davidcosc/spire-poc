@@ -9,6 +9,21 @@ echo "Installing docker ..[ok]"
 echo "Installing docker-compose ......"
 apt install docker-compose-v2 -y
 echo "Installing docker-compose ..[ok]"
+#FILE="./go1.22.2.linux-amd64.tar.gz"
+echo "Installing golang ......"
+snap install go --classic
+echo "Installing golang ..[ok]"
+#if test -f "${FILE}"; then
+#  echo "Golang already installed."
+#  echo "Installing golang ..[ok]"
+#else
+#  wget https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+#  rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+#  echo "export PATH=$PATH:/usr/local/go/bin" >> "/etc/profile"
+#  source "/etc/profile"
+#  go version
+#  echo "Installing golang ..[ok]"
+#fi
 echo "Installing tpm2 tools ......"
 apt install tpm2-tools tss2 -y
 echo "Installing tpm2 tools ..[ok]"
