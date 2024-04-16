@@ -13,17 +13,6 @@ echo "Installing docker-compose ..[ok]"
 echo "Installing golang ......"
 snap install go --classic
 echo "Installing golang ..[ok]"
-#if test -f "${FILE}"; then
-#  echo "Golang already installed."
-#  echo "Installing golang ..[ok]"
-#else
-#  wget https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
-#  rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
-#  echo "export PATH=$PATH:/usr/local/go/bin" >> "/etc/profile"
-#  source "/etc/profile"
-#  go version
-#  echo "Installing golang ..[ok]"
-#fi
 echo "Installing tpm2 tools ......"
 apt install tpm2-tools tss2 -y
 echo "Installing tpm2 tools ..[ok]"
@@ -64,3 +53,11 @@ cd spire
 docker compose up -d
 cd ..
 echo "Starting containers ..[ok]"
+EXP=$(printf "Selector         : docker:label:com.docker.compose.service:client\nSelector         : docker:label:com.docker.compose.service:server\n")
+ACT=$(docker exec server-spire "/usr/bin/spire-server" entry show | grep docker:label:com.docker.compose.service)
+if test "$EXP" != "$ACT"; then
+  echo "Registering workloads ......"
+  docker exec server-spire "/usr/bin/spire-server" entry create -parentID "spiffe://example.org/spire/agent/tpm/704b57fb7dff7c5f01d468a1f1dd42b2b83d7bcf1989539db05c77cd178b781c" -spiffeID "spiffe://example.org/server" -selector "docker:label:com.docker.compose.service:server"
+  docker exec server-spire "/usr/bin/spire-server" entry create -parentID "spiffe://example.org/spire/agent/tpm/704b57fb7dff7c5f01d468a1f1dd42b2b83d7bcf1989539db05c77cd178b781c" -spiffeID "spiffe://example.org/client" -selector "docker:label:com.docker.compose.service:client"
+  echo "Registering workloads ..[ok]"
+fi

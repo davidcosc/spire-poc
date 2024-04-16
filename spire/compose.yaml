@@ -19,6 +19,7 @@ services:
     command: ["/usr/bin/spire-server", "run", "-config", "/opt/spire/conf/server/server.conf"]
   spire-agent:
     privileged: true
+    pid: "host"
     user: "root"
     image: "spire-tpm-plugin"
     container_name: "agent-spire"
@@ -26,6 +27,7 @@ services:
     hostname: "spire-agent"
     volumes:
         - "./agent:/opt/spire/conf/agent"
+        - "./agent/api:/opt/spire/sockets"
         - "/var/run/:/var/run/"
         - "/dev:/dev"
     command: ["/usr/bin/spire-agent", "run", "-config", "/opt/spire/conf/agent/agent.conf"]

@@ -1,0 +1,34 @@
+
+version: '3'
+services:
+  server:
+    user: "root"
+    image: "golang"
+    container_name: "server"
+    hostname: "server"
+    restart: "unless-stopped"
+    network_mode: "spire_default"
+    expose:
+      - "443"
+    volumes:
+      - "/root/spiffe/spire/agent/api:/opt/spire/sockets"
+      - "/root/spiffe/workloads:/blubb"
+    deploy:
+      labels:
+        name: "server"
+    command: ["tail", "-f", "/dev/null"]
+  client:
+    user: "root"
+    image: "golang"
+    container_name: "client"
+    hostname: "client"
+    restart: "unless-stopped"
+    network_mode: "spire_default"
+    volumes:
+      - "/root/spiffe/spire/agent/api:/opt/spire/sockets"
+      - "/root/spiffe/workloads:/blubb"
+    deploy:
+      labels:
+        name: "client"
+    command: ["tail", "-f", "/dev/null"]
+
