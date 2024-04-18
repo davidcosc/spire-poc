@@ -1,4 +1,3 @@
-
 version: '3'
 services:
   server:
@@ -20,7 +19,7 @@ services:
   client:
     user: "root"
     image: "golang"
-    container_name: "client"
+    #container_name: "client"
     hostname: "client"
     restart: "unless-stopped"
     network_mode: "spire_default"
@@ -30,5 +29,6 @@ services:
     deploy:
       labels:
         name: "client"
+      replicas: 2
     command: ["tail", "-f", "/dev/null"]
 

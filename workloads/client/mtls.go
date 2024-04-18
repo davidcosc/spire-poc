@@ -15,8 +15,20 @@ import (
 
 func main() {
 	socketPath := "unix:///opt/spire/sockets/workload_api.sock"
-        serverAddress := "172.18.0.6:443"
+        serverAddress := "172.18.0.2:443"
         ctx := context.Background()
+
+	/*cli, err := workloadapi.New(ctx, workloadapi.WithAddr(socketPath))
+	if err != nil {
+		fmt.Printf("Err: %w\n", err)
+	}
+	svid, err := cli.FetchX509SVID(ctx)
+	if err != nil {
+		fmt.Printf("Err: %w\n", err)
+	}
+	fmt.Printf("Svid = %+v\n", svid.Certificates[0])
+	return**/
+
 
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -49,5 +61,8 @@ func main() {
 		return
 	}
 	fmt.Printf("Server says: %q", status)
+	//certificate := conn.ConnectionState().PeerCertificates[0].raw
+	//fmt.Printf("Raw cert: %w", certificate)
+	time.Sleep(300 * time.Second)
 	return
 }

@@ -54,10 +54,18 @@ docker compose up -d
 cd ..
 echo "Starting containers ..[ok]"
 EXP=$(printf "Selector         : docker:label:com.docker.compose.service:client\nSelector         : docker:label:com.docker.compose.service:server\n")
-ACT=$(docker exec server-spire "/usr/bin/spire-server" entry show | grep docker:label:com.docker.compose.service)
-if test "$EXP" != "$ACT"; then
-  echo "Registering workloads ......"
+ACT=$(docker exec server-spire "/usr/bin/spire-server" entry show | grep docker:label:com.docker.compose.service) || echo ""
+echo "Registering workloads ......"
+if test "$EXP" = "$ACT"; then
+  echo "Workloads already registered."
+  echo "Registering workloads ..[ok]"
+else
   docker exec server-spire "/usr/bin/spire-server" entry create -parentID "spiffe://example.org/spire/agent/tpm/704b57fb7dff7c5f01d468a1f1dd42b2b83d7bcf1989539db05c77cd178b781c" -spiffeID "spiffe://example.org/server" -selector "docker:label:com.docker.compose.service:server"
   docker exec server-spire "/usr/bin/spire-server" entry create -parentID "spiffe://example.org/spire/agent/tpm/704b57fb7dff7c5f01d468a1f1dd42b2b83d7bcf1989539db05c77cd178b781c" -spiffeID "spiffe://example.org/client" -selector "docker:label:com.docker.compose.service:client"
   echo "Registering workloads ..[ok]"
 fi
+echo "Starting workloads ......"
+cd workloads
+docker compose up -d
+cd ..
+echo "Starting workloads ..[ok]"

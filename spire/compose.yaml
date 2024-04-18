@@ -13,6 +13,7 @@ services:
     image: "spire-tpm-plugin"
     container_name: "server-spire"
     hostname: "spire-server"
+    restart: "unless-stopped"
     volumes:
         - "./server:/opt/spire/conf/server"
         - "../hashes:/opt/spire/data/hashes"
@@ -25,6 +26,7 @@ services:
     container_name: "agent-spire"
     depends_on: ["spire-server"]
     hostname: "spire-agent"
+    restart: "unless-stopped"
     volumes:
         - "./agent:/opt/spire/conf/agent"
         - "./agent/api:/opt/spire/sockets"
