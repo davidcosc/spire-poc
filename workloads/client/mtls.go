@@ -15,7 +15,7 @@ import (
 
 func main() {
 	socketPath := "unix:///opt/spire/sockets/workload_api.sock"
-        serverAddress := "172.18.0.2:443"
+        serverAddress := "server:443"
         ctx := context.Background()
 
 	/*cli, err := workloadapi.New(ctx, workloadapi.WithAddr(socketPath))
